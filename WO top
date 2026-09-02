@@ -1,0 +1,120 @@
+*&---------------------------------------------------------------------*
+*& Include          ZIN_A2R_CMX_WORKORDER_TOP
+*&---------------------------------------------------------------------*
+
+*----------------------------------------------------------------------*
+* Constants (status codes centralized)
+*----------------------------------------------------------------------*
+CONSTANTS:
+  gc_stat_rel   TYPE j_estat VALUE 'I0002',   "Released
+  gc_stat_del   TYPE j_estat VALUE 'I0013',   "Deleted (operation)
+  gc_stat_lkd   TYPE j_estat VALUE 'I0043',   "Locked
+  gc_stat_teco  TYPE j_estat VALUE 'I0045',   "Technically Completed
+  gc_stat_cmxc  TYPE j_estat VALUE 'E0010',   "CMX Confirmed
+  gc_stat_cmxs  TYPE j_estat VALUE 'E0014',   "Sent to CMX
+  gc_lang_en    TYPE spras   VALUE 'E',
+  gc_objclas    TYPE cdobjectcl VALUE 'ORDER',
+  gc_char_intf  TYPE atnam   VALUE 'INTERFACE',
+  gc_intf_cmx   TYPE atwrt   VALUE 'CMX'.
+
+*----------------------------------------------------------------------*
+* Type Definitions
+*----------------------------------------------------------------------*
+TYPES: BEGIN OF ty_output,
+         ordermessagestatus        TYPE char10,
+         plant                     TYPE werks_d,
+         maintenanceorder          TYPE aufnr,
+         maintenanceorderoperation TYPE vornr,
+         systemstatustext          TYPE char40,
+         technicalobject           TYPE char30,
+         maintordbasicstartdate    TYPE viaufkst-gstrp,
+         maintordbasicenddate      TYPE viaufkst-gltrp,
+         latestacceptablecompldate TYPE viaufkst-lacd_date,
+         systemid                  TYPE sy-sysid,
+         msg                       TYPE char72,
+       END OF ty_output.
+
+TYPES: BEGIN OF ty_jest_data,
+         objnr TYPE jest-objnr,
+         stat  TYPE jest-stat,
+         inact TYPE jest-inact,
+       END OF ty_jest_data.
+
+TYPES: BEGIN OF ty_jcds_data,
+         objnr TYPE jcds-objnr,
+         stat  TYPE jcds-stat,
+         inact TYPE jcds-inact,
+         udate TYPE jcds-udate,
+         utime TYPE jcds-utime,
+       END OF ty_jcds_data.
+
+TYPES: BEGIN OF ty_inob_data,
+         objek TYPE inob-objek,
+         cuobj TYPE inob-cuobj,
+       END OF ty_inob_data.
+
+TYPES: BEGIN OF ty_ausp_data,
+         objek TYPE ausp-objek,
+         atinn TYPE ausp-atinn,
+         atwrt TYPE ausp-atwrt,
+       END OF ty_ausp_data.
+
+TYPES: BEGIN OF ty_cdhdr_data,
+         objectid TYPE cdhdr-objectid,
+         udate    TYPE cdhdr-udate,
+         utime    TYPE cdhdr-utime,
+       END OF ty_cdhdr_data.
+
+TYPES: BEGIN OF ty_afko_data,
+         aufnr TYPE afko-aufnr,
+         aufpl TYPE afko-aufpl,
+       END OF ty_afko_data.
+
+TYPES: BEGIN OF ty_afvc_data,
+         aufpl TYPE afvc-aufpl,
+         aplzl TYPE afvc-aplzl,
+         vornr TYPE afvc-vornr,
+         objnr TYPE afvc-objnr,
+       END OF ty_afvc_data.
+
+TYPES: BEGIN OF ty_tj02t_data,
+         istat TYPE tj02t-istat,
+         txt04 TYPE tj02t-txt04,
+       END OF ty_tj02t_data.
+
+TYPES: BEGIN OF ty_iflos_data,
+         tplnr TYPE iflos-tplnr,
+         strno TYPE iflos-strno,
+       END OF ty_iflos_data.
+
+*----------------------------------------------------------------------*
+* Global Data
+*----------------------------------------------------------------------*
+DATA: gt_output TYPE TABLE OF ty_output,
+      gs_output TYPE ty_output.
+
+DATA: gt_orders TYPE TABLE OF viaufkst.
+
+"--- Prefetched tables (sorted for fast READ TABLE)
+DATA: gt_jest  TYPE SORTED TABLE OF ty_jest_data
+                    WITH NON-UNIQUE KEY objnr stat,
+      gt_jcds  TYPE SORTED TABLE OF ty_jcds_data
+                    WITH NON-UNIQUE KEY objnr stat,
+      gt_inob  TYPE SORTED TABLE OF ty_inob_data
+                    WITH NON-UNIQUE KEY objek,
+      gt_ausp  TYPE SORTED TABLE OF ty_ausp_data
+                    WITH NON-UNIQUE KEY objek atinn,
+      gt_cdhdr TYPE SORTED TABLE OF ty_cdhdr_data
+                    WITH NON-UNIQUE KEY objectid,
+      gt_afko  TYPE SORTED TABLE OF ty_afko_data
+                    WITH UNIQUE KEY aufnr,
+      gt_afvc  TYPE SORTED TABLE OF ty_afvc_data
+                    WITH NON-UNIQUE KEY aufpl aplzl,
+      gt_op_deleted TYPE SORTED TABLE OF j_objnr
+                    WITH UNIQUE KEY table_line,
+      gt_tj02t TYPE SORTED TABLE OF ty_tj02t_data
+                    WITH UNIQUE KEY istat,
+      gt_iflos TYPE SORTED TABLE OF ty_iflos_data
+                    WITH UNIQUE KEY tplnr.
+
+DATA: gv_atinn TYPE atinn.   "INTERFACE characteristic ID
