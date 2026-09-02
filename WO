@@ -1,0 +1,43 @@
+*====================================================================
+* RICEFW ID.........: 7292
+* TR Number.........: D30K903830
+* Version...........: 1.1
+* Program...........: ZIN_A2R_CMX_WORKORDER
+* Transaction Code..: SE38
+* Author............: hq75177
+* Date..............: 22.10.2025
+*--------------------------------------------------------------------
+* Description.......: Program for Updating userstatus (CMXS)
+*                     and sending of orders in a json format to CPI
+*--------------------------------------------------------------------
+* Modification list.:
+* Date      Author    TR Number          Description
+* 10/22/25  HQ75177   D30K906846         Review point.
+* 07/09/26  HQ75177   -                  Cleanup: remove SELECT in
+*                                        LOOP / PERFORM in LOOP with
+*                                        SELECT / nonlocal nested read.
+*====================================================================
+REPORT zin_a2r_cmx_workorder.
+
+INCLUDE zin_a2r_cmx_workorder_top.
+INCLUDE zin_a2r_cmx_workorder_sel.
+INCLUDE zin_a2r_cmx_workorder_f01.
+
+INITIALIZATION.
+  so_date-low    = sy-datum.
+  so_date-high   = sy-datum.
+  so_date-sign   = 'I'.
+  so_date-option = 'EQ'.
+  APPEND so_date.
+  so_time-low  = sy-uzeit.
+  so_time-high = sy-uzeit.
+
+  PERFORM f_default_time.
+
+START-OF-SELECTION.
+  PERFORM f_get_orders.
+  PERFORM f_prefetch_data.
+  PERFORM f_process_orders.
+
+END-OF-SELECTION.
+  PERFORM f_execute_main.
