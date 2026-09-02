@@ -1,0 +1,81 @@
+*&---------------------------------------------------------------------*
+*& Include ZTR_A2R_KCMP_STATUS_TOP
+*&---------------------------------------------------------------------*
+"────────────────────────────────────────────────────────────────────
+" TABLE DECLARATIONS
+"────────────────────────────────────────────────────────────────────
+TABLES: rihea, aufk, afih, afko.
+"────────────────────────────────────────────────────────────────────
+" ICONS
+"────────────────────────────────────────────────────────────────────
+INCLUDE <icon>.
+"────────────────────────────────────────────────────────────────────
+" TYPE DECLARATIONS
+"────────────────────────────────────────────────────────────────────
+"--------------------------------------------------------------------*
+" Shared types for pre-fetch buffers (used across FORMs)
+"--------------------------------------------------------------------*
+TYPES: BEGIN OF ty_afko,
+         aufnr TYPE afko-aufnr,
+         rsnum TYPE afko-rsnum,
+       END OF ty_afko,
+       tt_afko TYPE STANDARD TABLE OF ty_afko WITH DEFAULT KEY.
+TYPES: BEGIN OF ty_qals,
+         aufnr    TYPE qals-aufnr,
+         prueflos TYPE qals-prueflos,
+       END OF ty_qals,
+       tt_qals TYPE STANDARD TABLE OF ty_qals WITH DEFAULT KEY.
+TYPES: BEGIN OF ty_qmel,
+         aufnr TYPE qmel-aufnr,
+         qmnum TYPE qmel-qmnum,
+       END OF ty_qmel,
+       tt_qmel TYPE STANDARD TABLE OF ty_qmel WITH DEFAULT KEY.
+TYPES: tt_funcname TYPE STANDARD TABLE OF funcname  WITH DEFAULT KEY,
+       tt_aufnr    TYPE STANDARD TABLE OF aufk-aufnr WITH DEFAULT KEY.
+TYPES: BEGIN OF lty_order,
+         aufnr TYPE aufk-aufnr,   " Order Number
+         auart TYPE aufk-auart,   " Order Type
+         iwerk TYPE afih-iwerk,   " Planning Plant
+         erdat TYPE aufk-erdat,   " Created On
+         gstrp TYPE afko-gstrp,   " Basic Start
+         gltrp TYPE afko-gltrp,   " Basic Finish
+         iphas TYPE afih-iphas,   " Processing Phase
+         objnr TYPE jest-objnr,   " Object Number (for status)
+         rsnum TYPE resb-rsnum,   "Reservation
+       END OF lty_order.
+TYPES: BEGIN OF lty_log,
+         aufnr       TYPE aufk-aufnr, " Order
+         auart       TYPE aufk-auart, " Order Type
+         iwerk       TYPE afih-iwerk, " Plant
+         erdat       TYPE aufk-erdat, " Created On
+         gstrp       TYPE afko-gstrp, " Basic Start
+         gltrp       TYPE afko-gltrp, " Basic Finish
+         msgtp       TYPE sy-msgty,   " I/E
+         msgid       TYPE sy-msgid,   " Message ID
+         msgno       TYPE sy-msgno,   " Message Number
+         msgtxt      TYPE string,     " Status Message
+         light       TYPE icon_d,     " Status Icon (Green/Red/Gray)
+         kcmp_active TYPE c LENGTH 1, " KCMP Active Flag
+       END OF lty_log.
+
+"────────────────────────────────────────────────────────────────────
+" GLOBAL INTERNAL TABLES AND VARIABLES
+"────────────────────────────────────────────────────────────────────
+DATA:
+  gt_orders TYPE STANDARD TABLE OF lty_order WITH EMPTY KEY, " Source orders
+  gt_log    TYPE STANDARD TABLE OF lty_log   WITH EMPTY KEY, " ALV log data
+*  gs_log    TYPE lty_log,                                    " Work area
+  gv_user            TYPE sy-uname,        " Current user
+  gv_now             TYPE sy-datum,        " System date
+  gv_user_authorized TYPE abap_bool VALUE abap_true, " Authorization flag
+  gv_estat           TYPE jest-stat.       " KCMP status code (resolved)
+"────────────────────────────────────────────────────────────────────
+" CONSTANTS
+"────────────────────────────────────────────────────────────────────
+CONSTANTS:
+  gc_postp_l TYPE resb-postp VALUE 'L', " Planned Reservation
+  gc_postp_n TYPE resb-postp VALUE 'N', " Planned Purchase Requisition
+" Status light constants (used in logic and mapped to icons)
+  gc_light_green_code TYPE c VALUE 'G', " Success
+" Light icon mapping (for ALV display)
+  gc_msgid       TYPE symsgid VALUE 'ZA2R_KCMPMSG'.
